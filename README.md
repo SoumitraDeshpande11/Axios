@@ -4,29 +4,21 @@ Vision-based humanoid motion imitation and autonomous boxing AI.
 
 ## Setup
 
+Requires conda (miniforge) for pybullet on macOS ARM64.
+
 ```
-python3 -m venv venv
-source venv/bin/activate
+conda activate axios
 pip install -r requirements.txt
 ```
 
-### macOS ARM64 (Apple Silicon) - PyBullet Installation
-
-PyBullet does not provide pre-built wheels for macOS ARM64. Install via conda:
+If starting fresh:
 
 ```
 brew install miniforge
-conda create -n axios python=3.12
+conda create -n axios python=3.12 -y
 conda activate axios
-conda install -c conda-forge pybullet
+conda install -c conda-forge pybullet -y
 pip install -r requirements.txt
-```
-
-Or install system dependencies and build from source:
-
-```
-brew install cmake
-pip install pybullet
 ```
 
 ## Project Structure
