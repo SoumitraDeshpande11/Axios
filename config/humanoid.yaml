@@ -1,0 +1,22 @@
+simulation_hz: 240
+render: true
+
+physics:
+  gravity: -9.81
+  solver_iterations: 50
+  contact_erp: 0.9
+
+robot:
+  base_position: [0, 0, 1.0]
+  locked_joints: []
+
+pd_gains:
+  default:
+    kp: 100.0
+    kd: 10.0
+  shoulder:
+    kp: 200.0
+    kd: 20.0
+  elbow:
+    kp: 150.0
+    kd: 15.0
