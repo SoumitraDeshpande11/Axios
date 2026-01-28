@@ -137,8 +137,8 @@ def main():
     )
     args = parser.parse_args()
     
-    config_path = Path(__file__).parent.parent / args.config
-    output_dir = Path(__file__).parent.parent / args.output
+    config_path = Path(__file__).parent.parent.parent / args.config
+    output_dir = Path(__file__).parent.parent.parent / args.output
     
     if args.timesteps:
         config = load_config(config_path)
