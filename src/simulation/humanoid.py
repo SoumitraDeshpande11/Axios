@@ -7,13 +7,14 @@ from pathlib import Path
 
 class Humanoid:
     
+    # Actual joint names from Simple Humanoid URDF
     UPPER_BODY_JOINTS = [
-        "left_shoulder_pitch",
-        "left_shoulder_roll", 
-        "left_elbow",
-        "right_shoulder_pitch",
-        "right_shoulder_roll",
-        "right_elbow",
+        "LARM_SHOULDER_P",   # Left shoulder pitch
+        "LARM_SHOULDER_R",   # Left shoulder roll
+        "LARM_ELBOW",        # Left elbow
+        "RARM_SHOULDER_P",   # Right shoulder pitch
+        "RARM_SHOULDER_R",   # Right shoulder roll
+        "RARM_ELBOW",        # Right elbow
     ]
     
     def __init__(self, physics_client, base_position=(0, 0, 1.0)):
@@ -30,7 +31,7 @@ class Humanoid:
             urdf_path,
             basePosition=self.base_position,
             baseOrientation=[0, 0, 0, 1],
-            useFixedBase=False,
+            useFixedBase=True,  # Fixed base to prevent falling
             physicsClientId=self.client
         )
         self._build_joint_map()

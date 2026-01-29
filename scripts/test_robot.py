@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Test script to visualize the humanoid robot in PyBullet.
-Run this to see the robot and verify everything works.
+Uses the correct Simple Humanoid URDF with proper joint names.
 """
 import sys
 from pathlib import Path
@@ -11,6 +11,7 @@ import time
 import pybullet as p
 import pybullet_data
 from robot_descriptions import simple_humanoid_description
+import math
 
 
 def main():
@@ -22,67 +23,94 @@ def main():
     client = p.connect(p.GUI)
     p.setAdditionalSearchPath(pybullet_data.getDataPath())
     p.setGravity(0, 0, -9.81)
+    p.setTimeStep(1.0 / 240.0)
     
     # Load ground plane
     p.loadURDF("plane.urdf")
     
-    # Load humanoid robot
+    # Load humanoid robot with FIXED BASE
     urdf_path = simple_humanoid_description.URDF_PATH
     print(f"Loading robot from: {urdf_path}")
     
     robot_id = p.loadURDF(
         urdf_path,
-        basePosition=[0, 0, 1.0],
+        basePosition=[0, 0, 0.85],
         baseOrientation=[0, 0, 0, 1],
-        useFixedBase=False
+        useFixedBase=True  # Fixed base - robot won't fall
     )
     
-    # Print joint info
+    # Get the upper body joint indices
+    arm_joints = {
+        "LARM_SHOULDER_P": None,
+        "LARM_SHOULDER_R": None,
+        "LARM_ELBOW": None,
+        "RARM_SHOULDER_P": None,
+        "RARM_SHOULDER_R": None,
+        "RARM_ELBOW": None,
+    }
+    
     num_joints = p.getNumJoints(robot_id)
-    print(f"\nRobot loaded with {num_joints} joints:")
+    print(f"\nRobot loaded with {num_joints} joints")
     print("-" * 40)
     
     for i in range(num_joints):
         info = p.getJointInfo(robot_id, i)
         name = info[1].decode("utf-8")
-        joint_type = info[2]
-        type_name = {0: "REVOLUTE", 1: "PRISMATIC", 2: "SPHERICAL", 3: "PLANAR", 4: "FIXED"}.get(joint_type, "UNKNOWN")
-        print(f"  Joint {i}: {name} ({type_name})")
+        if name in arm_joints:
+            arm_joints[name] = i
+            print(f"  Found: {name} at index {i}")
     
     print("-" * 40)
     print("\nControls:")
     print("  - Use mouse to rotate camera")
     print("  - Scroll to zoom")
+    print("  - Robot arms will move automatically")
     print("  - Press Ctrl+C to exit")
     print("\nRunning simulation...")
     
     # Set camera position
     p.resetDebugVisualizerCamera(
-        cameraDistance=3.0,
-        cameraYaw=45,
-        cameraPitch=-20,
-        cameraTargetPosition=[0, 0, 1.0]
+        cameraDistance=2.5,
+        cameraYaw=30,
+        cameraPitch=-15,
+        cameraTargetPosition=[0, 0, 0.9]
     )
     
-    # Run simulation
+    # Run simulation with arm movements
     try:
         t = 0
         while True:
-            # Simple arm movement demo
-            left_shoulder_pitch = 0.5 * (1 + abs((t % 4) - 2) - 1)
-            right_shoulder_pitch = 0.5 * (1 + abs(((t + 2) % 4) - 2) - 1)
+            # Boxing-like arm movements
+            # Left jab
+            left_shoulder_p = -0.8 + 0.5 * math.sin(t * 3)
+            left_shoulder_r = 0.3
+            left_elbow = -1.0 - 0.5 * math.sin(t * 3)
             
-            # Find and control arm joints
-            for i in range(num_joints):
-                info = p.getJointInfo(robot_id, i)
-                name = info[1].decode("utf-8").lower()
-                
-                if "left" in name and "shoulder" in name and "pitch" in name:
-                    p.setJointMotorControl2(robot_id, i, p.POSITION_CONTROL, 
-                                           targetPosition=-left_shoulder_pitch, force=100)
-                elif "right" in name and "shoulder" in name and "pitch" in name:
-                    p.setJointMotorControl2(robot_id, i, p.POSITION_CONTROL,
-                                           targetPosition=-right_shoulder_pitch, force=100)
+            # Right cross (offset timing)
+            right_shoulder_p = -0.8 + 0.5 * math.sin(t * 3 + math.pi)
+            right_shoulder_r = 0.3
+            right_elbow = -1.0 - 0.5 * math.sin(t * 3 + math.pi)
+            
+            # Apply joint controls
+            if arm_joints["LARM_SHOULDER_P"] is not None:
+                p.setJointMotorControl2(robot_id, arm_joints["LARM_SHOULDER_P"], 
+                                       p.POSITION_CONTROL, targetPosition=left_shoulder_p, force=150)
+            if arm_joints["LARM_SHOULDER_R"] is not None:
+                p.setJointMotorControl2(robot_id, arm_joints["LARM_SHOULDER_R"],
+                                       p.POSITION_CONTROL, targetPosition=left_shoulder_r, force=150)
+            if arm_joints["LARM_ELBOW"] is not None:
+                p.setJointMotorControl2(robot_id, arm_joints["LARM_ELBOW"],
+                                       p.POSITION_CONTROL, targetPosition=left_elbow, force=100)
+            
+            if arm_joints["RARM_SHOULDER_P"] is not None:
+                p.setJointMotorControl2(robot_id, arm_joints["RARM_SHOULDER_P"],
+                                       p.POSITION_CONTROL, targetPosition=right_shoulder_p, force=150)
+            if arm_joints["RARM_SHOULDER_R"] is not None:
+                p.setJointMotorControl2(robot_id, arm_joints["RARM_SHOULDER_R"],
+                                       p.POSITION_CONTROL, targetPosition=right_shoulder_r, force=150)
+            if arm_joints["RARM_ELBOW"] is not None:
+                p.setJointMotorControl2(robot_id, arm_joints["RARM_ELBOW"],
+                                       p.POSITION_CONTROL, targetPosition=right_elbow, force=100)
             
             p.stepSimulation()
             time.sleep(1.0 / 240.0)
